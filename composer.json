@@ -1,0 +1,28 @@
+{
+	"name": "o3co/query-bridge-doctrine-orm",
+	"type": "library",
+	"description": "Doctrine ORM Bridge for O3Co Query Component",
+	"keywords": [
+		"php",
+		"query"
+	],
+	"license": "MIT",
+	"require" : {
+		"php" : ">=5.3.2",
+		"o3co/query-core": "~0.1@dev"
+	},
+	"require-dev" : {
+		"doctrine/orm" : "~2.2,>=2.2.3"
+	},
+	"autoload": {
+		"psr-4": {
+			"O3Co\\Query\\Bridge\\DoctrineORM\\": ""
+		}
+	},
+	"minimum-stability": "dev",
+	"extra": {
+		"branch-alias": {
+			"dev-master": "0.1-dev"
+		}
+	}
+}
