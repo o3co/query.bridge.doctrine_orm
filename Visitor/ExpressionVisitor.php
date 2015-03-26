@@ -89,7 +89,8 @@ class ExpressionVisitor extends BaseVisitor implements Visitor
         $qb = $this->getQueryBuilder();
 
 		// apply
-		$this->visitConditionalClause($statement->getClause('condition'));
+        if($statement->hasClause('condition')) 
+    		$this->visitConditionalClause($statement->getClause('condition'));
 		//$this->visitOrderClause($statement->getClause('order'));
         if($statement->hasClause('offset'))
             $this->visitOffsetClause($statement->getClause('offset'));
