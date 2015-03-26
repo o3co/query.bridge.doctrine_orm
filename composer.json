@@ -4,7 +4,8 @@
 	"description": "Doctrine ORM Bridge for O3Co Query Component",
 	"keywords": [
 		"php",
-		"query"
+		"query",
+        "doctrine2"
 	],
 	"license": "MIT",
 	"require" : {

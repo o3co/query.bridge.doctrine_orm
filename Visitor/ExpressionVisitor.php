@@ -8,9 +8,11 @@ use O3Co\Query\Query\Visitor;
 use O3Co\Query\Query\Visitor\ExpressionVisitor as BaseVisitor;
 use O3Co\Query\Query\Visitor\OutputVisitor,
     O3Co\Query\Query\Visitor\FieldResolver;
+
 use Doctrine\ORM\EntityManager as DoctrineEntityManager;
 use Doctrine\ORM\Query\Parameter;
 use Doctrine\ORM\Query\Expr as DoctrineOrmExpr;
+use Doctrine\ORM\Mapping\ClassMetadata as DoctrineClassMetadata;
 
 /**
  * ExpressionVisitor 
@@ -23,10 +25,28 @@ use Doctrine\ORM\Query\Expr as DoctrineOrmExpr;
  */
 class ExpressionVisitor extends BaseVisitor implements Visitor 
 {
+    /**
+     * em 
+     * 
+     * @var \Doctrine\ORM\EntityManager 
+     * @access private
+     */
 	private $em;
 
+    /**
+     * classMetadata 
+     * 
+     * @var \Doctrine\ORM\Mapping\ClassMetadata 
+     * @access private
+     */
 	private $classMetadata;
 
+    /**
+     * queryBuilder 
+     * 
+     * @var \Doctrine\ORM\QueryBuilder 
+     * @access private
+     */
     private $queryBuilder;
 
 	/**
@@ -43,7 +63,12 @@ class ExpressionVisitor extends BaseVisitor implements Visitor
 	public function __construct(DoctrineEntityManager $em, $class)
 	{
 		$this->em = $em;
-		$this->classMetadata = $em->getClassMetadata($class);
+
+        if($class instanceof DoctrineClassMetadata) {
+            $this->classMetadata = $class;
+        } else {
+    		$this->classMetadata = $em->getClassMetadata($class);
+        }
 
         // 
         $this->fieldResolver = new FieldResolver\SequentialFieldResolver(array(
