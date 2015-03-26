@@ -91,7 +91,21 @@ class ExpressionVisitor extends BaseVisitor implements Visitor
 		// apply
 		$this->visitConditionalClause($statement->getClause('condition'));
 		//$this->visitOrderClause($statement->getClause('order'));
+        if($statement->hasClause('offset'))
+            $this->visitOffsetClause($statement->getClause('offset'));
+        if($statement->hasClause('limit'))
+            $this->visitLimitClause($statement->getClause('limit'));
 	}
+
+    public function visitOffsetClause(Term\OffsetClause $offset)
+    {
+        $this->getQueryBuilder()->setFirstResult($offset->getValue());
+    }
+
+    public function visitLimitClause(Term\LimitClause $limit)
+    {
+        $this->getQueryBuilder()->setMaxResults($limit->getValue());
+    }
 
 	public function visitConditionalClause(Term\ConditionalClause $clause)
 	{
