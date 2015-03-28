@@ -4,10 +4,8 @@ namespace O3Co\Query\Bridge\DoctrineOrm\Visitor;
 use O3Co\Query\Bridge\DoctrineOrm\Query;
 use O3Co\Query\Bridge\DoctrineOrm;;
 use O3Co\Query\Query\Term;
-use O3Co\Query\Query\Visitor;
 use O3Co\Query\Query\Visitor\ExpressionVisitor as BaseVisitor;
-use O3Co\Query\Query\Visitor\OutputVisitor,
-    O3Co\Query\Query\Visitor\FieldResolver;
+use O3Co\Query\Query\Visitor\OuterVisitor;
 
 use Doctrine\ORM\EntityManager as DoctrineEntityManager;
 use Doctrine\ORM\Query\Parameter;
@@ -17,13 +15,13 @@ use Doctrine\ORM\Mapping\ClassMetadata as DoctrineClassMetadata;
 /**
  * ExpressionVisitor 
  *   Convert Expression to DoctrineQUery 
- * @uses Visitor
+ * @uses OuterVisitor
  * @package { PACKAGE }
  * @copyright Copyrights (c) 1o1.co.jp, All Rights Reserved.
  * @author Yoshi<yoshi@1o1.co.jp> 
  * @license { LICENSE }
  */
-class ExpressionVisitor extends BaseVisitor implements Visitor 
+class ExpressionVisitor extends BaseVisitor implements OuterVisitor 
 {
     /**
      * em 
@@ -50,10 +48,8 @@ class ExpressionVisitor extends BaseVisitor implements Visitor
     private $queryBuilder;
 
 	/**
-	 * relationalFields 
-	 *   map relational tables for field.
-	 *   ex)
-	 *     "owner.id" meens "field id on relational owner"
+	 * fieldResolver 
+     *   FieldResolver is to resolve association and aliased field name.
 	 *     
 	 * @var mixed
 	 * @access private
@@ -72,8 +68,10 @@ class ExpressionVisitor extends BaseVisitor implements Visitor
 
         // 
         $this->fieldResolver = new FieldResolver\SequentialFieldResolver(array(
+                // resolve only field with association
                 new DoctrineOrm\Visitor\FieldResolver\MappedRelationalFieldResolver($this->classMetadata), 
-                new DoctrineOrm\Visitor\FieldResolver\RootAliasFieldResolver(), 
+                // resolve only field on RootAlias
+                new DoctrineOrm\Visitor\FieldResolver\RootAliasFieldResolver($this->classMetadata), 
             ));
 	}
 
@@ -91,7 +89,8 @@ class ExpressionVisitor extends BaseVisitor implements Visitor
 		// apply
         if($statement->hasClause('condition')) 
     		$this->visitConditionalClause($statement->getClause('condition'));
-		//$this->visitOrderClause($statement->getClause('order'));
+        if($statement->hasClause('order'))
+    		$this->visitOrderClause($statement->getClause('order'));
         if($statement->hasClause('offset'))
             $this->visitOffsetClause($statement->getClause('offset'));
         if($statement->hasClause('limit'))
@@ -100,12 +99,12 @@ class ExpressionVisitor extends BaseVisitor implements Visitor
 
     public function visitOffsetClause(Term\OffsetClause $offset)
     {
-        $this->getQueryBuilder()->setFirstResult($offset->getValue());
+        $this->getQueryBuilder()->setFirstResult($offset->getValue()->getValue());
     }
 
     public function visitLimitClause(Term\LimitClause $limit)
     {
-        $this->getQueryBuilder()->setMaxResults($limit->getValue());
+        $this->getQueryBuilder()->setMaxResults($limit->getValue()->getValue());
     }
 
 	public function visitConditionalClause(Term\ConditionalClause $clause)
@@ -118,7 +117,14 @@ class ExpressionVisitor extends BaseVisitor implements Visitor
 
 	public function visitOrderClause(Term\OrderClause $clause)
 	{
-
+        $qb = $this->getQueryBuilder();
+        foreach($clause->getTerms() as $term) {
+            if($term->isAsc()) {
+                $qb->addOrderBy($this->visitField($term->getField()), 'ASC');
+            } else {
+                $qb->addOrderBy($this->visitField($term->getField()), 'DESC');
+            }
+        }
 	}
 
 	public function getQueryBuilder()
@@ -167,7 +173,7 @@ class ExpressionVisitor extends BaseVisitor implements Visitor
     public function visitComparisonExpression(Term\ComparisonExpression $expr) 
     {
         // fixme
-        $rawValue = $this->visitValueExpression($expr->getValue());
+        $rawValue = $this->visitValueIdentifier($expr->getValue());
         $parameterName = str_replace('.', '_', $expr->getField()) . '_' . substr(md5($rawValue), 0, 5);
         $parameter = new Parameter($parameterName, $rawValue);
         $placeHolder = ':' . $parameterName;
@@ -208,7 +214,7 @@ class ExpressionVisitor extends BaseVisitor implements Visitor
     public function visitTextComparisonExpression(Term\TextComparisonExpression $textComparison)
     {
         // fixme
-        $rawValue = $this->visitValueExpression($textComparison->getValue());
+        $rawValue = $this->visitValueIdentifier($textComparison->getValue());
         $parameterName = str_replace('.', '_', $textComparison->getField()) . '_' . substr(md5($rawValue), 0, 5);
         $placeHolder = ':' . $parameterName;
 
@@ -238,7 +244,7 @@ class ExpressionVisitor extends BaseVisitor implements Visitor
     public function visitCollectionComparisonExpression(Term\CollectionComparisonExpression $comparison)
     {
         // fixme
-        $rawValue = $this->visitValueExpression($comparison->getValue());
+        $rawValue = $this->visitValueIdentifier($comparison->getValue());
         $parameterName = str_replace('.', '_', $comparison->getField()) . '_' . substr(md5(json_encode($rawValue)), 0, 5);
         $parameter = new Parameter($parameterName, $rawValue);
         $placeHolder = ':' . $parameterName;
@@ -269,13 +275,13 @@ class ExpressionVisitor extends BaseVisitor implements Visitor
     }
 
     /**
-     * visitValueExpression 
+     * visitValueIdentifier 
      * 
-     * @param Term\ValueExpression $expr 
+     * @param Term\ValueIdentifier $expr 
      * @access public
      * @return void
      */
-    public function visitValueExpression(Term\ValueExpression $expr)
+    public function visitValueIdentifier(Term\ValueIdentifier $expr)
     {
         return $expr->getValue();
     }

@@ -4,6 +4,7 @@ namespace O3Co\Query\Bridge\DoctrineOrm;
 use O3Co\Query\Query;
 use O3Co\Query\Persister\AbstractPersister;
 use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\Mapping\ClassMetadata as DoctrineClassMetadata;
 
 /**
  * DoctrineOrmPersister 
@@ -26,7 +27,18 @@ class DoctrineOrmPersister extends AbstractPersister
      */
     public function __construct(EntityManager $em, $class)
     {
-        parent::__construct(new Visitor\ExpressionVisitor($em, $class));
+        if($class instanceof DoctrineClassMetadata) {
+            $classMetadata = $class;
+        } else {
+    		$classMetadata = $em->getClassMetadata($class);
+        }
+
+        $this->em = $em;
+        $this->classMetadata = $classMetadata;
+
+        parent::__construct(
+                new Visitor\ExpressionVisitor($em, $classMetadata)
+            );
     }
 
     /**

@@ -1,7 +1,7 @@
 <?php
 namespace O3Co\Query\Bridge\DoctrineOrm\Visitor\FieldResolver;
 
-use O3Co\Query\Query\Visitor\FieldResolver;
+use O3Co\Query\Bridge\DoctrineOrm\Visitor\FieldResolver;
 use Doctrine\ORM\Mapping\ClassMetadata as DoctrineClassMetadata;
 
 /**
