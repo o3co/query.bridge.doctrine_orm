@@ -15,13 +15,13 @@ use Doctrine\ORM\Mapping\ClassMetadata as DoctrineClassMetadata;
  */
 class MappedRelationalFieldResolver implements FieldResolver 
 {
-	/**
-	 * associations 
-	 * 
-	 * @var array
-	 * @access private
-	 */
-	private $associations = array();
+    /**
+     * associations 
+     * 
+     * @var array
+     * @access private
+     */
+    private $associations = array();
 
     private $classMetadata;
 
@@ -42,71 +42,71 @@ class MappedRelationalFieldResolver implements FieldResolver
         return false !== strpos($field, '.');
     }
 
-	/**
-	 * resolveField 
-	 * 
-	 * @param mixed $field 
-	 * @access public
-	 * @return void
-	 */
-	public function resolveField($field, array $options = array()) 
-	{
-		$fieldParts = explode('.', $field);
-		
-		$association = null;
-		$parts = array(); 
-		while(2 <= count($fieldParts)) {
-			$nestedField[] = array_shift($fieldParts);
+    /**
+     * resolveField 
+     * 
+     * @param mixed $field 
+     * @access public
+     * @return void
+     */
+    public function resolveField($field, array $options = array()) 
+    {
+        $fieldParts = explode('.', $field);
+        
+        $association = null;
+        $parts = array(); 
+        while(2 <= count($fieldParts)) {
+            $nestedField[] = array_shift($fieldParts);
 
-			$association = $this->resolveRelationalAssociation($nestedField, $options);
-		}
+            $association = $this->resolveRelationalAssociation($nestedField, $options);
+        }
 
-		if(!$association) {
-			throw new \Exception('Association is not specified to resolve field. Unassociated field is not supported to resolve.');
-		}
+        if(!$association) {
+            throw new \Exception('Association is not specified to resolve field. Unassociated field is not supported to resolve.');
+        }
 
-		return $association. '.' . array_shift($fieldParts);
-	}
+        return $association. '.' . array_shift($fieldParts);
+    }
 
-	/**
-	 * resolveRelationalAssociation 
-	 * 
-	 * @param array $parts 
-	 * @access protected
-	 * @return void
-	 */
-	protected function resolveRelationalAssociation(array $parts, array $options)
-	{
+    /**
+     * resolveRelationalAssociation 
+     * 
+     * @param array $parts 
+     * @access protected
+     * @return void
+     */
+    protected function resolveRelationalAssociation(array $parts, array $options)
+    {
         $rootAlias = $options['root_alias'];
         $qb = $options['query_builder'];
-		$association = implode('.', $parts);
-		if(!isset($this->associations[$association])) {
-			if(1 === count($parts)) {
-				$parentAssociation = $rootAlias;
-				$field = $association;
-			} else {
-				// last one is the next join field
-				$field  = array_pop($parts); 
-				// rest is the parent alias part and the parent field should be resolved before this called.
-				$parentName = implode('.', $parts);
-				if(!isset($this->associations[$parentName])) {
-					throw new \RuntimeException(sprintf('Parent association "%s" has to be resolved before resolve association "%s"', $parentName, $association));
-				}
-				$parentAssociation = $this->associations[implode('.', $parts)];
-			}
+        $association = implode('.', $parts);
+        if(!isset($this->associations[$association])) {
+            if(1 === count($parts)) {
+                $parentAssociation = $rootAlias;
+                $field = $association;
+            } else {
+                // last one is the next join field
+                $field  = array_pop($parts); 
+                // rest is the parent alias part and the parent field should be resolved before this called.
+                $parentName = implode('.', $parts);
+                if(!isset($this->associations[$parentName])) {
+                    throw new \RuntimeException(sprintf('Parent association "%s" has to be resolved before resolve association "%s"', $parentName, $association));
+                }
+                $parentAssociation = $this->associations[implode('.', $parts)];
+            }
 
-			// set next association number
-			$alias = 't_' . count($this->associations);
-			$qb->innerJoin(	
-					$parentAssociation . '.' . $field,
-					$alias
-				);
+            // set next association number
+            $alias = 't_' . count($this->associations);
+            $qb->innerJoin( 
+                    $parentAssociation . '.' . $field,
+                    $alias
+                );
 
-			$this->associations[$association] = $alias;
-		}
+            $this->associations[$association] = $alias;
+        }
 
-		return $this->associations[$association];
-	}
+        return $this->associations[$association];
+    }
     
     public function getClassMetadata()
     {

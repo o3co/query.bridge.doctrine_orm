@@ -21,12 +21,12 @@ interface FieldResolver
      */
     function canResolveField($field);
 
-	/**
-	 * resolveField 
-	 * 
-	 * @param mixed $field 
-	 * @access public
-	 * @return void
-	 */
-	function resolveField($field, array $options = array());
+    /**
+     * resolveField 
+     * 
+     * @param mixed $field 
+     * @access public
+     * @return void
+     */
+    function resolveField($field, array $options = array());
 }

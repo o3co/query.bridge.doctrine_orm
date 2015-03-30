@@ -30,7 +30,7 @@ class DoctrineOrmPersister extends AbstractPersister
         if($class instanceof DoctrineClassMetadata) {
             $classMetadata = $class;
         } else {
-    		$classMetadata = $em->getClassMetadata($class);
+            $classMetadata = $em->getClassMetadata($class);
         }
 
         $this->em = $em;

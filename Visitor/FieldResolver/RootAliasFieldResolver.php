@@ -25,16 +25,16 @@ class RootAliasFieldResolver implements FieldResolver
         return false === strpos($field, '.');
     }
 
-	/**
-	 * resolveField 
-	 * 
-	 * @param mixed $field 
-	 * @access public
-	 * @return void
-	 */
-	public function resolveField($field, array $options = array()) 
-	{
+    /**
+     * resolveField 
+     * 
+     * @param mixed $field 
+     * @access public
+     * @return void
+     */
+    public function resolveField($field, array $options = array()) 
+    {
         return $options['root_alias'] . '.' . $field;
-	}
+    }
 }
 
