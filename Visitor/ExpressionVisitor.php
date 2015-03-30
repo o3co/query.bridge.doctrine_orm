@@ -3,7 +3,7 @@ namespace O3Co\Query\Bridge\DoctrineOrm\Visitor;
 
 use O3Co\Query\Bridge\DoctrineOrm\Query;
 use O3Co\Query\Bridge\DoctrineOrm;;
-use O3Co\Query\Query\Part;
+use O3Co\Query\Query\Expr;
 use O3Co\Query\Query\Visitor\ExpressionVisitor as BaseVisitor;
 use O3Co\Query\Query\Visitor\OuterVisitor;
 
