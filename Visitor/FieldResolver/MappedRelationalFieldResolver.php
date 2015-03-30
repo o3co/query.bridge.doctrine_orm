@@ -8,7 +8,7 @@ use Doctrine\ORM\Mapping\ClassMetadata as DoctrineClassMetadata;
  * MappedRelationalFieldResolver 
  *   FieldResolver to resolve relations with Doctrine Field Mapping 
  * @uses FieldResolver
- * @package { PACKAGE }
+ * @package \O3Co\Query
  * @copyright Copyrights (c) 1o1.co.jp, All Rights Reserved.
  * @author Yoshi<yoshi@1o1.co.jp> 
  * @license MIT
