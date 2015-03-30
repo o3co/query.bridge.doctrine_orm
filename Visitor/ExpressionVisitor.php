@@ -16,10 +16,10 @@ use Doctrine\ORM\Mapping\ClassMetadata as DoctrineClassMetadata;
  * ExpressionVisitor 
  *   Convert Expression to DoctrineQUery 
  * @uses OuterVisitor
- * @package { PACKAGE }
+ * @package \O3Co\Query
  * @copyright Copyrights (c) 1o1.co.jp, All Rights Reserved.
  * @author Yoshi<yoshi@1o1.co.jp> 
- * @license { LICENSE }
+ * @license MIT
  */
 class ExpressionVisitor extends BaseVisitor implements OuterVisitor 
 {
@@ -29,7 +29,7 @@ class ExpressionVisitor extends BaseVisitor implements OuterVisitor
      * @var \Doctrine\ORM\EntityManager 
      * @access private
      */
-	private $em;
+    private $em;
 
     /**
      * classMetadata 
@@ -37,7 +37,7 @@ class ExpressionVisitor extends BaseVisitor implements OuterVisitor
      * @var \Doctrine\ORM\Mapping\ClassMetadata 
      * @access private
      */
-	private $classMetadata;
+    private $classMetadata;
 
     /**
      * queryBuilder 
@@ -47,23 +47,23 @@ class ExpressionVisitor extends BaseVisitor implements OuterVisitor
      */
     private $queryBuilder;
 
-	/**
-	 * fieldResolver 
+    /**
+     * fieldResolver 
      *   FieldResolver is to resolve association and aliased field name.
-	 *     
-	 * @var mixed
-	 * @access private
-	 */
-	private $fieldResolver;
+     *     
+     * @var mixed
+     * @access private
+     */
+    private $fieldResolver;
 
-	public function __construct(DoctrineEntityManager $em, $class)
-	{
-		$this->em = $em;
+    public function __construct(DoctrineEntityManager $em, $class)
+    {
+        $this->em = $em;
 
         if($class instanceof DoctrineClassMetadata) {
             $this->classMetadata = $class;
         } else {
-    		$this->classMetadata = $em->getClassMetadata($class);
+            $this->classMetadata = $em->getClassMetadata($class);
         }
 
         // 
@@ -73,7 +73,7 @@ class ExpressionVisitor extends BaseVisitor implements OuterVisitor
                 // resolve only field on RootAlias
                 new DoctrineOrm\Visitor\FieldResolver\RootAliasFieldResolver($this->classMetadata), 
             ));
-	}
+    }
 
     public function reset()
     {
@@ -81,21 +81,21 @@ class ExpressionVisitor extends BaseVisitor implements OuterVisitor
         $this->getFieldResolver()->reset();
     }
 
-	public function visitStatement(Term\Statement $statement)
-	{
+    public function visitStatement(Term\Statement $statement)
+    {
         $this->reset();
         $qb = $this->getQueryBuilder();
 
-		// apply
+        // apply
         if($statement->hasClause('condition')) 
-    		$this->visitConditionalClause($statement->getClause('condition'));
+            $this->visitConditionalClause($statement->getClause('condition'));
         if($statement->hasClause('order'))
-    		$this->visitOrderClause($statement->getClause('order'));
+            $this->visitOrderClause($statement->getClause('order'));
         if($statement->hasClause('offset'))
             $this->visitOffsetClause($statement->getClause('offset'));
         if($statement->hasClause('limit'))
             $this->visitLimitClause($statement->getClause('limit'));
-	}
+    }
 
     public function visitOffsetClause(Term\OffsetClause $offset)
     {
@@ -107,16 +107,16 @@ class ExpressionVisitor extends BaseVisitor implements OuterVisitor
         $this->getQueryBuilder()->setMaxResults($limit->getValue()->getValue());
     }
 
-	public function visitConditionalClause(Term\ConditionalClause $clause)
-	{
+    public function visitConditionalClause(Term\ConditionalClause $clause)
+    {
         $qb = $this->getQueryBuilder();
-		foreach($clause->getExpressions() as $expr) {
-			$qb->andWhere($expr->dispatch($this));
-		}
-	}
+        foreach($clause->getExpressions() as $expr) {
+            $qb->andWhere($expr->dispatch($this));
+        }
+    }
 
-	public function visitOrderClause(Term\OrderClause $clause)
-	{
+    public function visitOrderClause(Term\OrderClause $clause)
+    {
         $qb = $this->getQueryBuilder();
         foreach($clause->getExpressions() as $expr) {
             if($expr->isAsc()) {
@@ -125,24 +125,24 @@ class ExpressionVisitor extends BaseVisitor implements OuterVisitor
                 $qb->addOrderBy($this->visitField($expr->getField()), 'DESC');
             }
         }
-	}
+    }
 
-	public function getQueryBuilder()
-	{
+    public function getQueryBuilder()
+    {
         if(!$this->queryBuilder) {
-		    $this->queryBuilder = $this->em->createQueryBuilder();
-		    $this->queryBuilder
-		    	->select('root')
-		    	->from($this->getClassMetadata()->getName(), 'root')
-		    ;
+            $this->queryBuilder = $this->em->createQueryBuilder();
+            $this->queryBuilder
+                ->select('root')
+                ->from($this->getClassMetadata()->getName(), 'root')
+            ;
         }
-		return $this->queryBuilder;
-	}
+        return $this->queryBuilder;
+    }
 
-	public function getNativeQuery()
-	{
-		return $this->queryBuilder->getQuery();
-	}
+    public function getNativeQuery()
+    {
+        return $this->queryBuilder->getQuery();
+    }
     
     /**
      * visitLogicalExpression 
