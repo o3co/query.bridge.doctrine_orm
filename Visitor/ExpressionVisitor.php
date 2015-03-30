@@ -81,7 +81,7 @@ class ExpressionVisitor extends BaseVisitor implements OuterVisitor
         $this->getFieldResolver()->reset();
     }
 
-    public function visitStatement(Part\Statement $statement)
+    public function visitStatement(Expr\Statement $statement)
     {
         $this->reset();
         $qb = $this->getQueryBuilder();
