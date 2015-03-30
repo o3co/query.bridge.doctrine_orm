@@ -110,19 +110,19 @@ class ExpressionVisitor extends BaseVisitor implements OuterVisitor
 	public function visitConditionalClause(Term\ConditionalClause $clause)
 	{
         $qb = $this->getQueryBuilder();
-		foreach($clause->getTerms() as $term) {
-			$qb->andWhere($term->dispatch($this));
+		foreach($clause->getExpressions() as $expr) {
+			$qb->andWhere($expr->dispatch($this));
 		}
 	}
 
 	public function visitOrderClause(Term\OrderClause $clause)
 	{
         $qb = $this->getQueryBuilder();
-        foreach($clause->getTerms() as $term) {
-            if($term->isAsc()) {
-                $qb->addOrderBy($this->visitField($term->getField()), 'ASC');
+        foreach($clause->getExpressions() as $expr) {
+            if($expr->isAsc()) {
+                $qb->addOrderBy($this->visitField($expr->getField()), 'ASC');
             } else {
-                $qb->addOrderBy($this->visitField($term->getField()), 'DESC');
+                $qb->addOrderBy($this->visitField($expr->getField()), 'DESC');
             }
         }
 	}
