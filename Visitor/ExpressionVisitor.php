@@ -3,7 +3,7 @@ namespace O3Co\Query\Bridge\DoctrineOrm\Visitor;
 
 use O3Co\Query\Bridge\DoctrineOrm\Query;
 use O3Co\Query\Bridge\DoctrineOrm;;
-use O3Co\Query\Query\Term;
+use O3Co\Query\Query\Expr;
 use O3Co\Query\Query\Visitor\ExpressionVisitor as BaseVisitor;
 use O3Co\Query\Query\Visitor\OuterVisitor;
 
@@ -81,7 +81,7 @@ class ExpressionVisitor extends BaseVisitor implements OuterVisitor
         $this->getFieldResolver()->reset();
     }
 
-    public function visitStatement(Term\Statement $statement)
+    public function visitStatement(Expr\Statement $statement)
     {
         $this->reset();
         $qb = $this->getQueryBuilder();
@@ -97,17 +97,17 @@ class ExpressionVisitor extends BaseVisitor implements OuterVisitor
             $this->visitLimitClause($statement->getClause('limit'));
     }
 
-    public function visitOffsetClause(Term\OffsetClause $offset)
+    public function visitOffsetClause(Expr\OffsetClause $offset)
     {
         $this->getQueryBuilder()->setFirstResult($offset->getValue()->getValue());
     }
 
-    public function visitLimitClause(Term\LimitClause $limit)
+    public function visitLimitClause(Expr\LimitClause $limit)
     {
         $this->getQueryBuilder()->setMaxResults($limit->getValue()->getValue());
     }
 
-    public function visitConditionalClause(Term\ConditionalClause $clause)
+    public function visitConditionalClause(Expr\ConditionalClause $clause)
     {
         $qb = $this->getQueryBuilder();
         foreach($clause->getExpressions() as $expr) {
@@ -115,7 +115,7 @@ class ExpressionVisitor extends BaseVisitor implements OuterVisitor
         }
     }
 
-    public function visitOrderClause(Term\OrderClause $clause)
+    public function visitOrderClause(Expr\OrderClause $clause)
     {
         $qb = $this->getQueryBuilder();
         foreach($clause->getExpressions() as $expr) {
@@ -147,11 +147,11 @@ class ExpressionVisitor extends BaseVisitor implements OuterVisitor
     /**
      * visitLogicalExpression 
      * 
-     * @param Term\LogicalExpression $expr 
+     * @param Expr\LogicalExpression $expr 
      * @access public
      * @return void
      */
-    public function visitLogicalExpression(Term\LogicalExpression $expr)
+    public function visitLogicalExpression(Expr\LogicalExpression $expr)
     {
         foreach($expr->getExpressions() as $innerExpr) {
             $exprs[] = $this->visit($innerExpr);
@@ -159,18 +159,18 @@ class ExpressionVisitor extends BaseVisitor implements OuterVisitor
 
         $qb = $this->getQueryBuilder();
         switch($expr->getType()) {
-        case Term\LogicalExpression::TYPE_AND:
+        case Expr\LogicalExpression::TYPE_AND:
             return new DoctrineOrmExpr\Andx($exprs);
-        case Term\LogicalExpression::TYPE_OR:
+        case Expr\LogicalExpression::TYPE_OR:
             return new DoctrineOrmExpr\Orx($exprs);
-        case Term\LogicalExpression::TYPE_NOT:
+        case Expr\LogicalExpression::TYPE_NOT:
             return new DoctrineOrmExpr\Func('NOT', $exprs);
         default:
             throw new \RuntimeException(sprintf('Unknown type of LogicalExpression operator: [%s]', (string)$expr->getType()));
         }
     }
 
-    public function visitComparisonExpression(Term\ComparisonExpression $expr) 
+    public function visitComparisonExpression(Expr\ComparisonExpression $expr) 
     {
         // fixme
         $rawValue = $this->visitValueIdentifier($expr->getValue());
@@ -180,28 +180,28 @@ class ExpressionVisitor extends BaseVisitor implements OuterVisitor
 
         $qb = $this->getQueryBuilder();
         switch($expr->getOperator()) {
-        case Term\ComparisonExpression::EQ:
+        case Expr\ComparisonExpression::EQ:
             if(null === $rawValue) {
                 return $qb->expr()->isNull($this->visitField($expr->getField()));
             }
             $qb->getParameters()->add($parameter);
             return $qb->expr()->eq($this->visitField($expr->getField()), $placeHolder);
-        case Term\ComparisonExpression::NEQ:
+        case Expr\ComparisonExpression::NEQ:
             if(null === $rawValue) {
                 return $qb->expr()->isNotNull($this->visitField($expr->getField()));
             }
             $qb->getParameters()->add($parameter);
             return $qb->expr()->neq($this->visitField($expr->getField()), $placeHolder);
-        case Term\ComparisonExpression::GT:
+        case Expr\ComparisonExpression::GT:
             $qb->getParameters()->add($parameter);
             return $qb->expr()->gt($this->visitField($expr->getField()), $placeHolder);
-        case Term\ComparisonExpression::GTE:
+        case Expr\ComparisonExpression::GTE:
             $qb->getParameters()->add($parameter);
             return $qb->expr()->gte($this->visitField($expr->getField()), $placeHolder);
-        case Term\ComparisonExpression::LT:
+        case Expr\ComparisonExpression::LT:
             $qb->getParameters()->add($parameter);
             return $qb->expr()->lt($this->visitField($expr->getField()), $placeHolder);
-        case Term\ComparisonExpression::LTE:
+        case Expr\ComparisonExpression::LTE:
             $qb->getParameters()->add($parameter);
             return $qb->expr()->lte($this->visitField($expr->getField()), $placeHolder);
             break;
@@ -211,7 +211,7 @@ class ExpressionVisitor extends BaseVisitor implements OuterVisitor
         }
     }
 
-    public function visitTextComparisonExpression(Term\TextComparisonExpression $textComparison)
+    public function visitTextComparisonExpression(Expr\TextComparisonExpression $textComparison)
     {
         // fixme
         $rawValue = $this->visitValueIdentifier($textComparison->getValue());
@@ -220,19 +220,19 @@ class ExpressionVisitor extends BaseVisitor implements OuterVisitor
 
         $qb = $this->getQueryBuilder();
         switch($textComparison->getOperator()) {
-        case Term\TextComparisonExpression::MATCH:
+        case Expr\TextComparisonExpression::MATCH:
             $parameter = new Parameter($parameterName, $this->convertWildcardValue($rawValue));
             $qb->getParameters()->add($parameter);
             return $qb->expr()->like($this->visitField($textComparison->getField()), $placeHolder);
-        case Term\TextComparisonExpression::NOT_MATCH:
+        case Expr\TextComparisonExpression::NOT_MATCH:
             $parameter = new Parameter($parameterName, $this->convertWildcardValue($rawValue));
             $qb->getParameters()->add($parameter);
             return $qb->expr()->notLike($this->visitField($textComparison->getField()), $placeHolder);
-        case Term\TextComparisonExpression::CONTAIN:
+        case Expr\TextComparisonExpression::CONTAIN:
             $parameter = new Parameter($parameterName, '%' . $rawValue . '%');
             $qb->getParameters()->add($parameter);
             return $qb->expr()->like($this->visitField($textComparison->getField()), $placeHolder);
-        case Term\TextComparisonExpression::NOT_CONTAIN:
+        case Expr\TextComparisonExpression::NOT_CONTAIN:
             $parameter = new Parameter($parameterName, '%' . $rawValue . '%');
             $qb->getParameters()->add($parameter);
             return $qb->expr()->notLike($this->visitField($textComparison->getField()), $placeHolder);
@@ -241,7 +241,7 @@ class ExpressionVisitor extends BaseVisitor implements OuterVisitor
         }
     }
 
-    public function visitCollectionComparisonExpression(Term\CollectionComparisonExpression $comparison)
+    public function visitCollectionComparisonExpression(Expr\CollectionComparisonExpression $comparison)
     {
         // fixme
         $rawValue = $this->visitValueIdentifier($comparison->getValue());
@@ -251,10 +251,10 @@ class ExpressionVisitor extends BaseVisitor implements OuterVisitor
 
         $qb = $this->getQueryBuilder();
         switch($comparison->getOperator()) {
-        case Term\CollectionComparisonExpression::IN:
+        case Expr\CollectionComparisonExpression::IN:
             $qb->getParameters()->add($parameter);
             return $qb->expr()->in($this->visitField($comparison->getField()), $placeHolder);
-        case Term\CollectionComparisonExpression::NOT_IN:
+        case Expr\CollectionComparisonExpression::NOT_IN:
             $qb->getParameters()->add($parameter);
             return $qb->expr()->notIn($this->visitField($comparison->getField()), $placeHolder);
         default:
@@ -277,11 +277,11 @@ class ExpressionVisitor extends BaseVisitor implements OuterVisitor
     /**
      * visitValueIdentifier 
      * 
-     * @param Term\ValueIdentifier $expr 
+     * @param Expr\ValueIdentifier $expr 
      * @access public
      * @return void
      */
-    public function visitValueIdentifier(Term\ValueIdentifier $expr)
+    public function visitValueIdentifier(Expr\ValueIdentifier $expr)
     {
         return $expr->getValue();
     }
