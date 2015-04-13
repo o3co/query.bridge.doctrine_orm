@@ -110,9 +110,7 @@ class ExpressionVisitor extends BaseVisitor implements OuterVisitor
     public function visitConditionalClause(Expr\ConditionalClause $clause)
     {
         $qb = $this->getQueryBuilder();
-        foreach($clause->getExpressions() as $expr) {
-            $qb->andWhere($expr->dispatch($this));
-        }
+        $qb->andWhere($clause->getExpression()->dispatch($this));
     }
 
     public function visitOrderClause(Expr\OrderClause $clause)
